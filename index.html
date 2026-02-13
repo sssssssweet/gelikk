@@ -608,19 +608,41 @@
         function sayNo() {
             noCount++;
 
-            if (noCount >= maxNo) {
+            if (noCount > maxNo) {
                 btnNo.classList.add('shrinking');
                 setTimeout(() => btnNo.style.display = 'none', 600);
                 return;
             }
 
-            btnNo.classList.add('running');
+            // On first escape, snapshot current position and switch to fixed
+            if (!btnNo.classList.contains('running')) {
+                const rect = btnNo.getBoundingClientRect();
+                btnNo.style.left = rect.left + 'px';
+                btnNo.style.top = rect.top + 'px';
+                btnNo.classList.add('running');
+                btnNo.offsetHeight; // force reflow
+            }
 
-            const pad = 60;
-            const maxX = window.innerWidth - btnNo.offsetWidth - pad;
-            const maxY = window.innerHeight - btnNo.offsetHeight - pad;
-            const x = Math.random() * maxX + pad / 2;
-            const y = Math.random() * maxY + pad / 2;
+            // Get "Yes" button area to avoid overlapping
+            const yesRect = btnYes.getBoundingClientRect();
+            const btnW = btnNo.offsetWidth;
+            const btnH = btnNo.offsetHeight;
+            const margin = 20; // safe margin from screen edges
+            const gap = 20;    // gap between buttons
+
+            // Try random positions until we find one that doesn't overlap "Yes"
+            let x, y, attempts = 0;
+            do {
+                x = margin + Math.random() * (window.innerWidth - btnW - margin * 2);
+                y = margin + Math.random() * (window.innerHeight - btnH - margin * 2);
+                attempts++;
+            } while (
+                attempts < 50 &&
+                !(x + btnW + gap < yesRect.left ||
+                  x > yesRect.right + gap ||
+                  y + btnH + gap < yesRect.top ||
+                  y > yesRect.bottom + gap)
+            );
 
             btnNo.style.left = x + 'px';
             btnNo.style.top = y + 'px';
